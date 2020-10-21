@@ -2,119 +2,179 @@ import Foundation
 
 //------------ 1 ------------//
 
-/// Check if the given number is even (0, 2, 4, 6 etc.)
-/// - Parameter number: number to check
-/// - Returns: True if even, false if odd
-func isEven(_ number: Int) -> Bool {
-    return number % 2 == 0
+enum CarContainer: String {
+    case trunk, carcass
 }
 
-let myNumber = 3
-let myNumberIsEven = isEven(myNumber)
-print(myNumberIsEven)
-
-
-//------------ 2 ------------//
-
-/// Check if the given number divided by 3 entirely
-/// - Parameter number: number to check
-/// - Returns: True if divided entirely, otherwise false
-func isDividedByThreeEntirely(_ number: Int) -> Bool {
-    return number % 3 == 0
+enum HootType: String {
+    case beep = "Beeeeeep"
+    case boop = "Booop booop"
 }
 
-let secondNumber = 0
-let secondNumberDividesByThree = isDividedByThreeEntirely(secondNumber)
-print(secondNumberDividesByThree)
-
-
-//------------ 3 ------------//
-
-/// Creates an array of integers
-/// - Parameter length: array length
-/// - Returns: array of numbers
-func createArrayWith(length: Int) -> [Int] {
-    guard length > 0 else {
-        fatalError("Upper bound must be grater than 0")
-    }
-    var array: [Int] = []
-    for i in 1...length {
-        array.append(i)
-    }
-    return array
+enum CarAction {
+    
+    case startEngine
+    case stopEngine
+    case openWindows
+    case closeWindows
+    case loadCargo(container: CarContainer, volume: UInt)
+    case unloadCargo(container: CarContainer, volume: UInt)
 }
 
-let array = createArrayWith(length: 100)
-
-
-//------------ 4 ------------//
-
-// Even numbers clean
-
-/// Removes all even numbers from array
-/// - Parameter array: original array
-/// - Returns: cleaned array
-func removeAllEvenNumbersFrom(_ array: [Int]) -> [Int] {
+protocol Car {
     
-    var cleanedArray = array
-    cleanedArray.removeAll(where: { $0 % 2 == 0 })
+    // MARK: Properties
+    var mark: String { get }
+    var year: UInt { get }
+    var trunkTotalVolume: UInt { get }
+    var trunkTakenVolume: UInt { get set }
+    var engineIsStarted: Bool { get set }
+    var windowsAreOpened: Bool { get set }
     
-    return cleanedArray
+    // MARK: Functions
+    
+    mutating func perform(action: CarAction)
 }
 
-/// Removes all even numbers from array (bad and inefficient implementation)
-/// - Parameter array: original array
-/// - Returns: cleaned array
-/// - Remark: we need to iterate backwards, otherwise we'll get index out of range exception
-func dummyReverseLoopClean(of array: [Int]) -> [Int] {
-    
-    // create a copy of array, so we can modify it
-    var cleanedArray = array
-    
-    // iterate through the array copy backwards
-    for i in (0..<cleanedArray.count).reversed() {
-        // if a current number is even...
-        if cleanedArray[i] % 2 == 0 {
-            // remove it
-            cleanedArray.remove(at: i)
+extension Car {
+
+    mutating func perform(action: CarAction) {
+        switch action {
+        case .openWindows:
+            windowsAreOpened = true
+            print("windows are opened")
+        case .closeWindows:
+            windowsAreOpened = false
+            print("windows are closed")
+        case .startEngine:
+            engineIsStarted = true
+            print("engine has been started")
+        case .stopEngine:
+            engineIsStarted = false
+            print("engine stopped")
+        case .loadCargo(let container, let volume):
+            if container == .trunk {
+                if trunkTakenVolume + volume <= trunkTotalVolume {
+                    trunkTakenVolume += volume
+                    print("Cargo of volume: \(volume) has been loaded in trunk. Available space: \(trunkTotalVolume - trunkTakenVolume)")
+                } else {
+                    print("To much cargo volume. Can't fit in the car's trunk")
+                }
+                break
+            }
+        
+            print("Cargo of volume: \(volume) has been loaded to car's carcass")
+        case .unloadCargo(let container, let volume):
+        trunkTakenVolume -= volume
+        print("Cargo of volume: \(volume) has been  unloaded from \(container.rawValue)")
+        default:
+        print("some other action happened. Developer forgot to implement it...")
         }
     }
-    return cleanedArray
+
 }
 
-// first approach
-let noEvenNumbers1 = removeAllEvenNumbersFrom(array)
-
-// second approach
-let noEvenNumbers2 = array.filter { $0 % 2 != 0 }
-
-// third approach
-let noEvenNumbers3 = dummyReverseLoopClean(of: array)
-
-
-// Remove all that are not divided by 3
-
-// You get the point, I know how to use functions and stuff. Only filter this time :D
-let cleanedArray = noEvenNumbers1.filter { $0 % 3 != 0}
-print(cleanedArray)
-
-
-//------------ 5 ------------//
-
-func getFibonacciArray(of length: Int) -> [UInt] {
+struct SportCar: Car {
     
-    var fibonacciArray : [UInt] = [1, 1]
+    // MARK: Shared properties
     
-    guard length > 1 else {
-        return [1]
+    let mark: String
+    let year: UInt
+    let trunkTotalVolume: UInt
+    
+    var trunkTakenVolume: UInt
+    var engineIsStarted: Bool
+    var windowsAreOpened: Bool
+    
+    // MARK: Specific properties
+    
+    var wheelsSize: UInt = 17
+    var secondsForHundred: Float = 5.3
+    
+    // MARK: Specific functions
+    
+    mutating func changeWheels(for newSize: UInt) {
+        wheelsSize = newSize
+        print("New wheels of size \(wheelsSize) have been installed")
     }
     
-    (2..<length).forEach { i in
-        fibonacciArray.append(fibonacciArray[i-1] + fibonacciArray[i - 2])
+    mutating func upgradeEngine(by percent: UInt) {
+        
+        let oldValue = secondsForHundred
+        secondsForHundred = secondsForHundred * Float(percent) / 100 + secondsForHundred
+        if oldValue < secondsForHundred {
+            print("Engine upgrade. Now it takes \(secondsForHundred) seconds for 100 km/h")
+        } else {
+            print("Engine downgrade. Now it takes \(secondsForHundred) seconds for 100 km/h. Why u do this, bruh???")
+        }
     }
-    
-    return fibonacciArray
 }
 
-// UInt cannot hold fibonacci number greater than 92th
-let arrayFib = getFibonacciArray(of: 92)
+struct TrunkCar: Car {
+    
+    // MARK: Shared properties
+    let mark: String
+    let year: UInt
+    let trunkTotalVolume: UInt
+    
+    var trunkTakenVolume: UInt
+    var engineIsStarted: Bool
+    var windowsAreOpened: Bool
+    
+    // MARK: Specific properties
+    
+    var passengersCount: UInt = 1
+    var hoot: HootType = .beep
+    
+    // MARK: Specific functions
+    
+    mutating func changeHoot(for newHoot: HootType) {
+        hoot = newHoot
+        print("Yey, new hoot sound")
+        print(hoot.rawValue)
+    }
+    
+    mutating func addPassenger(_ count: UInt) {
+        passengersCount += count
+    }
+    
+    mutating func removePassenger(_ count: UInt) {
+        guard count <= passengersCount else {
+            print("Cant have less passengers than zero")
+            return
+        }
+        
+        passengersCount -= count
+    }
+}
+
+
+var sportCar = SportCar(mark: "Nissan", year: 2008, trunkTotalVolume: 40, trunkTakenVolume: 34, engineIsStarted: false, windowsAreOpened: false)
+var trunkCar = TrunkCar(mark: "VAZ", year: 1993, trunkTotalVolume: 160, trunkTakenVolume: 20, engineIsStarted: false, windowsAreOpened: true)
+var carsArray: [Car] = [sportCar, trunkCar]
+
+// Question here. Regular forEach or for loop without index does not allow me to mutate array elements. Why? Mozhno po russki :D
+for i in 0..<carsArray.count {
+    print("Car of mark: \(carsArray[i].mark) is starting...")
+    carsArray[i].perform(action: .startEngine)
+}
+
+sportCar.changeWheels(for: 19)
+sportCar.upgradeEngine(by: 10)
+
+var trunkExactCopy = trunkCar
+trunkCar.changeHoot(for: .boop)
+print(trunkExactCopy.hoot) // old hoot here, because of value type and trunkExactCopy is indeed a copy, not the same object. For class it would be 2 pointers for same object in heap
+trunkCar.removePassenger(20)
+
+
+// Общий вопрос. Возможно я не совсем правильно понял задание...
+// 1. Описать несколько структур – любой легковой автомобиль SportCar и любой грузовик TrunkCar.
+// Описал 2 структуры, ок
+// 2. Описать в каждом наследнике специфичные для него свойства.Структуры должны содержать марку авто, год выпуска, объем багажника/кузова, запущен ли двигатель, открыты ли окна, заполненный объем багажника.
+
+// Наследнике кого или чего? Я не совсем понял... Структура вроде как наследуется только от протокола. Мб классы имелись ввиду или я что-то не так прочел...
+// Вообщем поэтому сделал протокол родителя, в экстеншен общий дефолтный функционал, в конкретные типы добавлены свои свойства и функции.
+// Обычно подобные задания на методы в дочерних классах именно что лучше показывать в классах. Вроде как в структурах я не могу оверрайдить ничего) Т.е. с классом все было бы по интереснее как по мне. Различия класса от структуры я надеюсь я понимаю, и в целом тут это демонстрируется (mutating, копирование и тд)
+
+
