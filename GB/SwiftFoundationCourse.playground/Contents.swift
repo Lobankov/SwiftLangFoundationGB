@@ -1,7 +1,5 @@
 import Foundation
 
-//------------ 1 ------------//
-
 enum CarContainer: String {
     case trunk, carcass
 }
