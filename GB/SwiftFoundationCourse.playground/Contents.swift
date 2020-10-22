@@ -1,5 +1,7 @@
 import Foundation
 
+print("abc")
+
 enum CarContainer: String {
     case trunk, carcass
 }
@@ -156,6 +158,10 @@ for i in 0..<carsArray.count {
     print("Car of mark: \(carsArray[i].mark) is starting...")
     carsArray[i].perform(action: .startEngine)
 }
+
+
+
+carsArray[0].engineIsStarted
 
 sportCar.changeWheels(for: 19)
 sportCar.upgradeEngine(by: 10)
