@@ -1,7 +1,5 @@
 import Foundation
 
-print("abc")
-
 enum CarContainer: String {
     case trunk, carcass
 }
@@ -17,28 +15,46 @@ enum CarAction {
     case stopEngine
     case openWindows
     case closeWindows
-    case loadCargo(container: CarContainer, volume: UInt)
-    case unloadCargo(container: CarContainer, volume: UInt)
+    case loadCargo(container: CarContainer, volume: Int)
+    case unloadCargo(container: CarContainer, volume: Int)
 }
 
-protocol Car {
+class CarBase {
     
     // MARK: Properties
-    var mark: String { get }
-    var year: UInt { get }
-    var trunkTotalVolume: UInt { get }
-    var trunkTakenVolume: UInt { get set }
-    var engineIsStarted: Bool { get set }
-    var windowsAreOpened: Bool { get set }
+    
+    var mark: String
+    var year: Int
+    var trunkTotalVolume: Int
+    var trunkTakenVolume: Int
+    var engineIsStarted: Bool = false
+    var windowsAreOpened: Bool = false
+    
+    // MARK: Initialization
+    
+    init?(mark: String, year: Int, trunkTotalVolume: Int, trunkTakenVolume: Int) {
+        
+        // вопрос касательно использования таких вещей в продакшене: норм ли так делать или не очень?) Ну технически это можно назвать валидацией, но стоит ли оно того чтобы потом хенлдить плюс один опшенел. В примере со структурами, я использовал UInt. Что лучше?
+        // У меня нет опыта работы с другими свит разрабами, собственно вот такие вещи интересно услышать было
+        guard year > 0, trunkTakenVolume > 0, trunkTakenVolume <= trunkTotalVolume else {
+            return nil
+        }
+        
+        self.mark = mark
+        self.year = year
+        self.trunkTotalVolume = trunkTotalVolume
+        self.trunkTakenVolume = trunkTakenVolume
+    }
+    
+    // MARK: Deinitialization
+    
+    deinit {
+        print("Car \(mark) has been deleted from memory")
+    }
     
     // MARK: Functions
     
-    mutating func perform(action: CarAction)
-}
-
-extension Car {
-
-    mutating func perform(action: CarAction) {
+    func perform(action: CarAction) {
         switch action {
         case .openWindows:
             windowsAreOpened = true
@@ -48,7 +64,7 @@ extension Car {
             print("windows are closed")
         case .startEngine:
             engineIsStarted = true
-            print("engine has been started")
+            print("\(mark) engine has been started")
         case .stopEngine:
             engineIsStarted = false
             print("engine stopped")
@@ -71,34 +87,64 @@ extension Car {
         print("some other action happened. Developer forgot to implement it...")
         }
     }
-
 }
 
-struct SportCar: Car {
+class SportCar: CarBase {
     
-    // MARK: Shared properties
+    // MARK: Own properties
     
-    let mark: String
-    let year: UInt
-    let trunkTotalVolume: UInt
+    var wheelsSize: Int
+    var secondsForHundred: Float
     
-    var trunkTakenVolume: UInt
-    var engineIsStarted: Bool
-    var windowsAreOpened: Bool
+    // MARK: Initialization
     
-    // MARK: Specific properties
+    override init?(mark: String, year: Int, trunkTotalVolume: Int, trunkTakenVolume: Int) {
+        wheelsSize = 17
+        secondsForHundred = 5.3
+        
+        super.init(mark: mark, year: year, trunkTotalVolume: trunkTotalVolume, trunkTakenVolume: trunkTakenVolume)
+    }
     
-    var wheelsSize: UInt = 17
-    var secondsForHundred: Float = 5.3
+    convenience init?(mark: String, year: Int, trunkTotalVolume: Int, trunkTakenVolume: Int, wheelsSize: Int, secondsForHundred: Float) {
+        self.init(mark: mark, year: year, trunkTotalVolume: trunkTotalVolume, trunkTakenVolume: trunkTakenVolume)
+        
+        self.wheelsSize = wheelsSize
+        self.secondsForHundred = secondsForHundred
+    }
+    
+    // MARK: Shared functions
+    
+    override func perform(action: CarAction) {
+        switch action {
+        case .loadCargo(_, _):
+            print("this is a sport car, use it for fast rides, not for groceries")
+        case .unloadCargo(_, _):
+            print("You've found a subwoofer. No groceries for you")
+        case .startEngine:
+            print("Ne gonite pocani, vi materyam eshe nyzhni")
+        // call parent default implementation. Let's imagine that all other actions are the same for all cars
+        default:
+            super.perform(action: action)
+        }
+    }
     
     // MARK: Specific functions
     
-    mutating func changeWheels(for newSize: UInt) {
+    func changeWheels(for newSize: Int) {
+        
+        guard newSize > 0 else {
+            return
+        }
+        
         wheelsSize = newSize
         print("New wheels of size \(wheelsSize) have been installed")
     }
     
-    mutating func upgradeEngine(by percent: UInt) {
+    func upgradeEngine(by percent: Int) {
+        
+        guard percent > 0 else {
+            return
+        }
         
         let oldValue = secondsForHundred
         secondsForHundred = secondsForHundred * Float(percent) / 100 + secondsForHundred
@@ -110,75 +156,97 @@ struct SportCar: Car {
     }
 }
 
-struct TrunkCar: Car {
-    
-    // MARK: Shared properties
-    let mark: String
-    let year: UInt
-    let trunkTotalVolume: UInt
-    
-    var trunkTakenVolume: UInt
-    var engineIsStarted: Bool
-    var windowsAreOpened: Bool
+class TrunkCar: CarBase {
     
     // MARK: Specific properties
     
-    var passengersCount: UInt = 1
-    var hoot: HootType = .beep
+    var passengersCount: Int?
+    var hoot: HootType?
+    
+    // MARK: Initialization
+    
+    override init?(mark: String, year: Int, trunkTotalVolume: Int, trunkTakenVolume: Int) {
+        super.init(mark: mark, year: year, trunkTotalVolume: trunkTotalVolume, trunkTakenVolume: trunkTakenVolume)
+    }
+    
+    convenience init?(mark: String, year: Int, trunkTotalVolume: Int, trunkTakenVolume: Int, passengersCount: Int, hoot: HootType) {
+        self.init(mark: mark, year: year, trunkTotalVolume: trunkTotalVolume, trunkTakenVolume: trunkTakenVolume)
+        
+        self.passengersCount = passengersCount
+        self.hoot = hoot
+    }
+    
+    // MARK: Deinitalization
+    
+    deinit {
+        // всегда вызовется до деструктора родителя, правильно?
+        if trunkTakenVolume > 0 {
+            print("You forgot to unload \(trunkTakenVolume) kg of cargo. What a waste...")
+        }
+    }
+    
+    // MARK: Shared functions
+    
+    override func perform(action: CarAction) {
+        switch action {
+        case .unloadCargo(let container, let volume):
+            print("We have to unload \(volume) kg of cargo from \(container). Let's do it boys!")
+        case .stopEngine:
+            print("Finally it is quiet")
+        default:
+            super.perform(action: action)
+        }
+    }
     
     // MARK: Specific functions
     
-    mutating func changeHoot(for newHoot: HootType) {
+    func changeHoot(for newHoot: HootType) {
         hoot = newHoot
         print("Yey, new hoot sound")
-        print(hoot.rawValue)
+        print(hoot?.rawValue)
     }
     
-    mutating func addPassenger(_ count: UInt) {
-        passengersCount += count
+    func addPassenger(_ count: Int) {
+        
+        guard self.passengersCount != nil else {
+            self.passengersCount = count
+            return
+        }
+        
+        passengersCount! += count
     }
     
-    mutating func removePassenger(_ count: UInt) {
-        guard count <= passengersCount else {
+    func removePassenger(_ count: Int) {
+        guard passengersCount != nil, count <= passengersCount! else {
             print("Cant have less passengers than zero")
             return
         }
         
-        passengersCount -= count
+        passengersCount! -= count
     }
 }
 
 
-var sportCar = SportCar(mark: "Nissan", year: 2008, trunkTotalVolume: 40, trunkTakenVolume: 34, engineIsStarted: false, windowsAreOpened: false)
-var trunkCar = TrunkCar(mark: "VAZ", year: 1993, trunkTotalVolume: 160, trunkTakenVolume: 20, engineIsStarted: false, windowsAreOpened: true)
-var carsArray: [Car] = [sportCar, trunkCar]
+var nissanSkyLine = SportCar(mark: "Nissan", year: 2006, trunkTotalVolume: 40, trunkTakenVolume: 12, wheelsSize: 19, secondsForHundred: 5.2)
+var toyotaTacoma = TrunkCar(mark: "Toyota", year: 2008, trunkTotalVolume: 160, trunkTakenVolume: 65)
 
-// Question here. Regular forEach or for loop without index does not allow me to mutate array elements. Why? Mozhno po russki :D
-for i in 0..<carsArray.count {
-    print("Car of mark: \(carsArray[i].mark) is starting...")
-    carsArray[i].perform(action: .startEngine)
+var carsArray: [CarBase?]? = [nissanSkyLine, toyotaTacoma]
+
+carsArray?.forEach { $0?.perform(action: .startEngine) }
+carsArray = nil
+
+var sameCar = nissanSkyLine
+nissanSkyLine = nil
+toyotaTacoma = nil
+
+if let someCar: CarBase = sameCar {
+    print(someCar.year)
 }
 
+sameCar = nil
 
-
-carsArray[0].engineIsStarted
-
-sportCar.changeWheels(for: 19)
-sportCar.upgradeEngine(by: 10)
-
-var trunkExactCopy = trunkCar
-trunkCar.changeHoot(for: .boop)
-print(trunkExactCopy.hoot) // old hoot here, because of value type and trunkExactCopy is indeed a copy, not the same object. For class it would be 2 pointers for same object in heap
-trunkCar.removePassenger(20)
-
-
-// Общий вопрос. Возможно я не совсем правильно понял задание...
-// 1. Описать несколько структур – любой легковой автомобиль SportCar и любой грузовик TrunkCar.
-// Описал 2 структуры, ок
-// 2. Описать в каждом наследнике специфичные для него свойства.Структуры должны содержать марку авто, год выпуска, объем багажника/кузова, запущен ли двигатель, открыты ли окна, заполненный объем багажника.
-
-// Наследнике кого или чего? Я не совсем понял... Структура вроде как наследуется только от протокола. Мб классы имелись ввиду или я что-то не так прочел...
-// Вообщем поэтому сделал протокол родителя, в экстеншен общий дефолтный функционал, в конкретные типы добавлены свои свойства и функции.
-// Обычно подобные задания на методы в дочерних классах именно что лучше показывать в классах. Вроде как в структурах я не могу оверрайдить ничего) Т.е. с классом все было бы по интереснее как по мне. Различия класса от структуры я надеюсь я понимаю, и в целом тут это демонстрируется (mutating, копирование и тд)
+print(nissanSkyLine)
+print(toyotaTacoma)
+print(sameCar)
 
 
