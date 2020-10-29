@@ -32,7 +32,7 @@ protocol Car: class {
     
     // MARK: Functions
     
-    func perform(action: CarAction)
+//    func perform(action: CarAction)
 }
 
 extension Car {
@@ -63,7 +63,7 @@ extension Car {
                 }
                 break
             }
-        
+
             print("Cargo of volume: \(volume) has been loaded to car's carcass")
         case .unloadCargo(let container, let volume):
         trunkTakenVolume -= volume
@@ -71,6 +71,7 @@ extension Car {
         default:
         print("some other action happened. Developer forgot to implement it...")
         }
+//        fatalError("poshel nahuy")
     }
 }
 
@@ -120,6 +121,7 @@ class SportCar: Car {
         // call parent default implementation. Let's imagine that all other actions are the same for all cars
         default:
             (self as Car).perform(action: action)
+//        print("recursion bug")
         }
     }
     
@@ -198,6 +200,7 @@ class TrunkCar: Car {
             print("Finally it is quiet")
         default:
             (self as Car).perform(action: action)
+//            print("recursion bug")
         }
     }
     
