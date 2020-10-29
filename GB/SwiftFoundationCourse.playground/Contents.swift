@@ -19,38 +19,23 @@ enum CarAction {
     case unloadCargo(container: CarContainer, volume: Int)
 }
 
-class CarBase {
+protocol Car: class {
     
     // MARK: Properties
     
-    var mark: String
-    var year: Int
-    var trunkTotalVolume: Int
-    var trunkTakenVolume: Int
-    var engineIsStarted: Bool = false
-    var windowsAreOpened: Bool = false
+    var mark: String { get }
+    var year: Int { get }
+    var trunkTotalVolume: Int { get }
+    var trunkTakenVolume: Int { get set }
+    var engineIsStarted: Bool { get set }
+    var windowsAreOpened: Bool { get set}
     
-    // MARK: Initialization
+    // MARK: Functions
     
-    init?(mark: String, year: Int, trunkTotalVolume: Int, trunkTakenVolume: Int) {
-        
-        // вопрос касательно использования таких вещей в продакшене: норм ли так делать или не очень?) Ну технически это можно назвать валидацией, но стоит ли оно того чтобы потом хенлдить плюс один опшенел. В примере со структурами, я использовал UInt. Что лучше?
-        // У меня нет опыта работы с другими свит разрабами, собственно вот такие вещи интересно услышать было
-        guard year > 0, trunkTakenVolume > 0, trunkTakenVolume <= trunkTotalVolume else {
-            return nil
-        }
-        
-        self.mark = mark
-        self.year = year
-        self.trunkTotalVolume = trunkTotalVolume
-        self.trunkTakenVolume = trunkTakenVolume
-    }
-    
-    // MARK: Deinitialization
-    
-    deinit {
-        print("Car \(mark) has been deleted from memory")
-    }
+    func perform(action: CarAction)
+}
+
+extension Car {
     
     // MARK: Functions
     
@@ -89,7 +74,14 @@ class CarBase {
     }
 }
 
-class SportCar: CarBase {
+class SportCar: Car {
+    
+    var mark: String
+    var year: Int
+    var trunkTotalVolume: Int
+    var trunkTakenVolume: Int
+    var engineIsStarted: Bool = false
+    var windowsAreOpened: Bool = false
     
     // MARK: Own properties
     
@@ -98,15 +90,18 @@ class SportCar: CarBase {
     
     // MARK: Initialization
     
-    override init?(mark: String, year: Int, trunkTotalVolume: Int, trunkTakenVolume: Int) {
+    init(_ mark: String, _ year: Int, _ trunkTotalVolume: Int, _ trunkTakenVolume: Int) {
+        self.mark = mark
+        self.year = year
+        self.trunkTotalVolume = trunkTotalVolume
+        self.trunkTakenVolume = trunkTakenVolume
+        
         wheelsSize = 17
         secondsForHundred = 5.3
-        
-        super.init(mark: mark, year: year, trunkTotalVolume: trunkTotalVolume, trunkTakenVolume: trunkTakenVolume)
     }
     
-    convenience init?(mark: String, year: Int, trunkTotalVolume: Int, trunkTakenVolume: Int, wheelsSize: Int, secondsForHundred: Float) {
-        self.init(mark: mark, year: year, trunkTotalVolume: trunkTotalVolume, trunkTakenVolume: trunkTakenVolume)
+    convenience init(_ mark: String, _ year: Int, _ trunkTotalVolume: Int, _ trunkTakenVolume: Int, _ wheelsSize: Int, _ secondsForHundred: Float) {
+        self.init(mark, year, trunkTotalVolume, trunkTakenVolume)
         
         self.wheelsSize = wheelsSize
         self.secondsForHundred = secondsForHundred
@@ -114,7 +109,7 @@ class SportCar: CarBase {
     
     // MARK: Shared functions
     
-    override func perform(action: CarAction) {
+    func perform(action: CarAction) {
         switch action {
         case .loadCargo(_, _):
             print("this is a sport car, use it for fast rides, not for groceries")
@@ -124,7 +119,7 @@ class SportCar: CarBase {
             print("Ne gonite pocani, vi materyam eshe nyzhni")
         // call parent default implementation. Let's imagine that all other actions are the same for all cars
         default:
-            super.perform(action: action)
+            (self as Car).perform(action: action)
         }
     }
     
@@ -156,45 +151,53 @@ class SportCar: CarBase {
     }
 }
 
-class TrunkCar: CarBase {
+extension SportCar: CustomStringConvertible {
+    var description: String {
+        return "Sport car \(mark) with \(secondsForHundred) seconds for hundred"
+    }
+}
+
+class TrunkCar: Car {
+    
+    var mark: String
+    var year: Int
+    var trunkTotalVolume: Int
+    var trunkTakenVolume: Int
+    var engineIsStarted: Bool = false
+    var windowsAreOpened: Bool = false
+    
     
     // MARK: Specific properties
     
-    var passengersCount: Int?
-    var hoot: HootType?
+    var passengersCount: Int = 0
+    var hoot: HootType = .beep
     
     // MARK: Initialization
     
-    override init?(mark: String, year: Int, trunkTotalVolume: Int, trunkTakenVolume: Int) {
-        super.init(mark: mark, year: year, trunkTotalVolume: trunkTotalVolume, trunkTakenVolume: trunkTakenVolume)
+    init(_ mark: String, _ year: Int, _ trunkTotalVolume: Int, _ trunkTakenVolume: Int) {
+        self.mark = mark
+        self.year = year
+        self.trunkTotalVolume = trunkTotalVolume
+        self.trunkTakenVolume = trunkTakenVolume
     }
     
-    convenience init?(mark: String, year: Int, trunkTotalVolume: Int, trunkTakenVolume: Int, passengersCount: Int, hoot: HootType) {
-        self.init(mark: mark, year: year, trunkTotalVolume: trunkTotalVolume, trunkTakenVolume: trunkTakenVolume)
+    convenience init(mark: String, year: Int, trunkTotalVolume: Int, trunkTakenVolume: Int, passengersCount: Int, hoot: HootType) {
+        self.init(mark, year, trunkTotalVolume, trunkTakenVolume)
         
         self.passengersCount = passengersCount
         self.hoot = hoot
     }
     
-    // MARK: Deinitalization
-    
-    deinit {
-        // всегда вызовется до деструктора родителя, правильно?
-        if trunkTakenVolume > 0 {
-            print("You forgot to unload \(trunkTakenVolume) kg of cargo. What a waste...")
-        }
-    }
-    
     // MARK: Shared functions
     
-    override func perform(action: CarAction) {
+    func perform(action: CarAction) {
         switch action {
         case .unloadCargo(let container, let volume):
             print("We have to unload \(volume) kg of cargo from \(container). Let's do it boys!")
         case .stopEngine:
             print("Finally it is quiet")
         default:
-            super.perform(action: action)
+            (self as Car).perform(action: action)
         }
     }
     
@@ -203,50 +206,38 @@ class TrunkCar: CarBase {
     func changeHoot(for newHoot: HootType) {
         hoot = newHoot
         print("Yey, new hoot sound")
-        print(hoot?.rawValue)
+        print(hoot.rawValue)
     }
     
     func addPassenger(_ count: Int) {
         
-        guard self.passengersCount != nil else {
-            self.passengersCount = count
-            return
-        }
-        
-        passengersCount! += count
+        passengersCount += count
     }
     
     func removePassenger(_ count: Int) {
-        guard passengersCount != nil, count <= passengersCount! else {
+        guard count <= passengersCount else {
             print("Cant have less passengers than zero")
             return
         }
         
-        passengersCount! -= count
+        passengersCount -= count
     }
 }
 
-
-var nissanSkyLine = SportCar(mark: "Nissan", year: 2006, trunkTotalVolume: 40, trunkTakenVolume: 12, wheelsSize: 19, secondsForHundred: 5.2)
-var toyotaTacoma = TrunkCar(mark: "Toyota", year: 2008, trunkTotalVolume: 160, trunkTakenVolume: 65)
-
-var carsArray: [CarBase?]? = [nissanSkyLine, toyotaTacoma]
-
-carsArray?.forEach { $0?.perform(action: .startEngine) }
-carsArray = nil
-
-var sameCar = nissanSkyLine
-nissanSkyLine = nil
-toyotaTacoma = nil
-
-if let someCar: CarBase = sameCar {
-    print(someCar.year)
+extension TrunkCar: CustomStringConvertible {
+    var description: String {
+        return "Trunk car \(mark) that has \(passengersCount) passengers right now"
+    }
 }
 
-sameCar = nil
+var skyLine = SportCar("Nissan Skyline", 2008, 60, 30, 17, 5.0)
+var toyotaHilux = TrunkCar("Toyota Hilux", 2002, 250, 140)
 
-print(nissanSkyLine)
-print(toyotaTacoma)
-print(sameCar)
+var carsArray: [Car] = [skyLine, toyotaHilux]
 
+carsArray.forEach { print($0) }
 
+skyLine.perform(action: .startEngine)
+skyLine.perform(action: .stopEngine)
+
+carsArray.last?.perform(action: .loadCargo(container: .trunk, volume: 120))
