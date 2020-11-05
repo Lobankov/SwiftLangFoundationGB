@@ -1,94 +1,87 @@
 import Foundation
 
-struct Queue<T: Equatable> {
+enum DateRefuseError : Error {
     
-    // MARK: Private fields
+    case iLikeYouLikeABrother
+    case lowMoney(requiredAmount: Int)
+    case ugly
     
-    private var underlayingArray : [T] = []
-    
-    // MARK: Public properties
-    
-    public var head: T? {
-        return underlayingArray.first
-    }
-    
-    public var count: Int {
-        return underlayingArray.count
-    }
-    
-    // MARK: Base queue public functions
-    
-    mutating public func enqueue(_ element: T) {
-        underlayingArray.append(element)
-    }
-    
-    mutating public func dequeue() -> T? {
-        return underlayingArray.removeFirst()
-    }
-    
-    public func peek() -> T? {
-        return underlayingArray.last
-    }
-    
-    mutating public func clear() {
-        underlayingArray.removeAll()
-    }
-    
-    public func toArray() -> [T] {
-        return underlayingArray
-    }
-    
-    // MARK: High order functions
-    
-    mutating func sort(with closure: (_ firstElement: T, _ secondElement: T) -> Bool) {
-        underlayingArray.sort(by: closure)
-    }
-    
-    mutating func reverse() {
-        underlayingArray.reverse()
-    }
-    
-    public func contains(_ element: T) -> Bool {
-        return underlayingArray.contains(element)
-    }
-    
-    // MARK: Subscript
-    
-    subscript(index: Int) -> T {
-        get {
-            assert(index >= 0 && index <= underlayingArray.count, "Index out of queue range")
-            return underlayingArray[index]
-        }
-        set (newValue) {
-            assert(index >= 0 && index <= underlayingArray.count, "Index out of queue range")
-            underlayingArray[index] = newValue
+    static func getRandomRefuse() -> Self {
+        
+        let randomNumber = Int.random(in: 1...3)
+        
+        switch randomNumber {
+        case 1:
+            return .iLikeYouLikeABrother
+        case 2:
+            return .lowMoney(requiredAmount: Int.random(in: 100...1000))
+        default:
+            return .ugly
         }
     }
 }
 
+enum WhatIsWrongHoneyError: String, Error {
+    
+    case lowAttention = "You're always busy..."
+    case iDoNotKnow = "Everything is fine... I'm not mad at you"
+    case otherGirls = "I saw your like at that girl instagram. Who is she??"
+    
+    static func getRandomReason() -> Self {
+        let randomNumber = Int.random(in: 1...3)
+        
+        switch randomNumber {
+        case 1:
+            return .lowAttention
+        case 2:
+            return .iDoNotKnow
+        default:
+            return .otherGirls
+        }
+    }
+}
 
-var myQueue = Queue<Int>()
+// ------------- 1 ------------- //
 
-myQueue.enqueue(10)
-myQueue.enqueue(20)
-myQueue.enqueue(30)
-myQueue.enqueue(5)
+func askGirlForADate() -> (Date?, DateRefuseError?) {
+    
+    // 50% for success :)
+    if Int.random(in: 1...2) % 2 == 0 {
+        return (Calendar.current.date(byAdding: .day, value: Int.random(in: 0...5), to: Date()), nil)
+    } else {
+        return (nil, DateRefuseError.getRandomRefuse())
+    }
+    
+}
 
-let peekedElement = myQueue.peek()
-let dequeuedElement = myQueue.dequeue()
-let count = myQueue.count
+// ------------- 2 ------------- //
 
-myQueue.enqueue(1)
+func fixGirlfriendBadMood() throws -> String {
+    
+    if Int.random(in: 1...2) % 2 == 0 {
+        return "Let's eat something ^_^"
+    } else {
+        throw WhatIsWrongHoneyError.getRandomReason()
+    }
+    
+}
 
-myQueue.sort { $0 < $1 }
+let responseTuple = askGirlForADate()
 
-let lastPeeked = myQueue.peek()
+if let dateOfDate = responseTuple.0 {
+    let dateFormatter = DateFormatter()
+    dateFormatter.dateFormat = "dd:MM:yyyy"
+    print("You will go for a date on: \(dateFormatter.string(from: dateOfDate))")
+} else {
+    print("Never lucky. Refuse reason was: \(responseTuple.1!)")
+}
 
-let firstElementFromSubscripting = myQueue[0]
-myQueue[0] = 12
-
-myQueue.reverse()
-
-let itShouldBeTwelve = myQueue.peek()
-
+do {
+    let everythingIsGoodMessage = try fixGirlfriendBadMood()
+    print(everythingIsGoodMessage)
+} catch let whatsWrongError as WhatIsWrongHoneyError {
+    print(whatsWrongError.rawValue)
+} catch {
+    print("Unknown error occurred")
+}
 
